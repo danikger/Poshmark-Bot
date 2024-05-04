@@ -47,6 +47,7 @@ solver = TwoCaptcha(service_key)
 
 
 # ADDITIONAL FUNCTIONS -----------------------------------------
+# Sleep functions to randomize the action speeds
 def share_sleep():
     time.sleep(random.uniform(lowest_share_like_time, highest_share_like_time))
 
@@ -76,17 +77,17 @@ def scroll_down_shares(items):
     browser.execute_script("window.scroll(0, 0);")
 
 
+# Used to solve Google captchas. Uses 2captcha API to solve them.
 def solve_captcha():
     time.sleep(3)
     browser.execute_script('var element=document.getElementsByClassName("g-recaptcha-response")[0]; element.style.display="";')
 
-    pageurl = browser.current_url
     print(solver.get_balance())
 
+    pageurl = browser.current_url
     url = "http://2captcha.com/in.php?key=" + service_key + "&method=userrecaptcha&googlekey=" + site_key + "&pageurl=" + pageurl
-    resp = requests.get(url)
 
-    print(resp)
+    resp = requests.get(url)
 
     if resp.text[0:2] != 'OK':
         quit('Service error. Error code:' + resp.text)
@@ -100,11 +101,9 @@ def solve_captcha():
         if resp.text[0:2] == 'OK':
             break
     time.sleep(20)
-    print(resp.text[3:])
+    # print(resp.text[3:])
 
-    browser.execute_script("""
-          document.getElementsByClassName("g-recaptcha-response")[0].innerHTML = arguments[0]
-        """, resp.text[3:])   
+    browser.execute_script("""document.getElementsByClassName("g-recaptcha-response")[0].innerHTML = arguments[0]""", resp.text[3:])
 
     browser.execute_script('var element=document.getElementsByClassName("g-recaptcha-response")[0]; element.style.display="none";')
 
@@ -142,11 +141,13 @@ def solve_captcha():
         }
         return [];""")
 
+    # Path to the callback function inside the ___grecaptcha_cfg captcha object (Example: "___grecaptcha_cfg.clients[0].C.C.callback")
     callback_path = captcha_data[0]['callback']
 
+    # Since there's no "submit" button for the captcha, we need to call the callback function manually
     browser.execute_script(f"window[{callback_path}](arguments[0])", resp.text[3:])
 
-    # VVVVVVVVVV This works as well but you need to know the path to the callback function inside the ___grecaptcha_cfg captcha object VVVVVVVVVV
+    # VVVVVVVVVV This works as well but you need to know the path to the callback function inside the ___grecaptcha_cfg captcha object. You can find the object by pasting this into the web console: "___grecaptcha_cfg.clients[0]"
     # browser.execute_script("""window[___grecaptcha_cfg.clients[0].C.C.callback](arguments[0])""", resp.text[3:])
 
     time.sleep(2)
@@ -156,7 +157,7 @@ def solve_captcha():
 fp = webdriver.FirefoxOptions()
 fp.set_preference('dom.webdriver.enabled', False)
 
-log = open("poshmark_log.txt", "a")
+log = open("poshmark_log.txt", "a") # Log file to keep track of the bot's history (errors, successes, etc.)
 
 browser = webdriver.Firefox(fp)
 browser.get("https://poshmark.ca")
@@ -186,17 +187,13 @@ if browser.find_elements(By.CLASS_NAME, 'g-recaptcha-con'):
 
 # MAIN ---------------------------------------------------------
 if float(solver.get_balance()) < 0.5:
-
     message_text = 'Captcha solver balance is low! Current balance remaining: $' + str(solver.get_balance()) + '\n'
     log.write(message_text)
 
 
-
+# Finds and removes the "turn on notifications" popup
 element = browser.find_element(By.CLASS_NAME, 'soft__permission')
-browser.execute_script("""
-    var element = arguments[0];
-    element.parentNode.removeChild(element);
-    """, element)
+browser.execute_script("""var element = arguments[0]; element.parentNode.removeChild(element);""", element)
 
 
 # FOLLOW PEOPLE -----------------------------------------------------------
@@ -210,6 +207,7 @@ if follow_people:
         time.sleep(random.uniform(0.4, 0.8))  # 0.4, 0.9time.sleep(1)
         if len(browser.find_elements(By.CSS_SELECTOR, '.modal__close-btn')) > 0:
             solve_captcha()
+
 
 # SHARE MY CLOSET ---------------------------------------------------------
 if share_my_closet:
@@ -230,11 +228,10 @@ if share_my_closet:
     closet_size = len(browser.find_elements(By.CLASS_NAME, 'share-gray-large'))
 
     try:
+        # Shares all items once, waits ~10 minutes, then shares all items again
         for x in range(2):
             for i in range(closet_size):
                 WebDriverWait(browser, 20).until(EC.invisibility_of_element_located((By.CLASS_NAME, 'modal-backdrop')))
-                if browser.find_elements(By.CLASS_NAME, 'g-recaptcha-con'):
-                    solve_captcha()
                 WebDriverWait(browser, 20).until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'share-gray-large')))[i].click()
                 if browser.find_elements(By.CLASS_NAME, 'g-recaptcha-con'):
                     solve_captcha()
@@ -245,14 +242,13 @@ if share_my_closet:
                 completed_shares += 1
             time.sleep(638)
     except Exception as e:
-        message_text = 'Something went wrong. I only completed ' + str(completed_shares) \
-                       + ' shares from your own closet. Reason: ' + str(e) + '.\n'
+        message_text = 'Something went wrong. Only completed ' + str(completed_shares) + ' shares from your own closet. Reason: ' + str(e) + '.\n'
         print(e)
 
         print('The script took {0} seconds.'.format(time.time() - startTime))
         log.write(message_text)
         log.close()
-        # browser.quit()
+        browser.quit()
         exit()
 
     time.sleep(5)
@@ -262,6 +258,7 @@ if share_my_closet:
                         + ' on solving captchas this session.\n'
     log.write(message_text)
     log.close()
+
 
 # SHARE OTHERS ---------------------------------------------------------
 if share_others_closets:
@@ -280,11 +277,12 @@ if share_others_closets:
                 solve_captcha()
             completed_shares += 1
     except Exception as e:
-        message_text = 'Something went wrong. I only completed ' + str(completed_shares) \
-                       + ' shares. Reason: ' + str(e) + '.'
+        message_text = 'Something went wrong. Only completed ' + str(completed_shares) + ' shares. Reason: ' + str(e) + '.'
 
         print('The script took {0} seconds.'.format(time.time() - startTime))
+        log.write(message_text)
         log.close()
+        browser.quit()
         exit()
 
     time.sleep(5)
