@@ -195,6 +195,8 @@ if float(solver.get_balance()) < 0.5:
 element = browser.find_element(By.CLASS_NAME, 'soft__permission')
 browser.execute_script("""var element = arguments[0]; element.parentNode.removeChild(element);""", element)
 
+browser.implicitly_wait(0)
+
 
 # FOLLOW PEOPLE -----------------------------------------------------------
 if follow_people:
@@ -211,12 +213,13 @@ if follow_people:
 
 # SHARE MY CLOSET ---------------------------------------------------------
 if share_my_closet:
-    browser.implicitly_wait(0)
-
+    WebDriverWait(browser, 20).until(EC.presence_of_element_located((By.CLASS_NAME, 'dropdown__selector--caret')))
     browser.find_elements(By.CLASS_NAME, 'dropdown__selector--caret')[1].click()
 
+    WebDriverWait(browser, 20).until(EC.presence_of_element_located((By.XPATH, '//a[@href="' + '/closet/' + username + '"]')))
     browser.find_element(By.XPATH, '//a[@href="' + '/closet/' + username + '"]').click()
 
+    WebDriverWait(browser, 20).until(EC.presence_of_element_located((By.XPATH, "//input[@value='available']")))
     available_radio_button = browser.find_element(By.XPATH, "//input[@value='available']")
 
     browser.execute_script("arguments[0].scrollIntoView();", available_radio_button)
