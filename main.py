@@ -1,4 +1,3 @@
-import webbrowser
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC  
@@ -12,8 +11,6 @@ import requests
 
 import time
 import random
-import math
-
 import os
 from dotenv import load_dotenv
 
