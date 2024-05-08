@@ -200,11 +200,15 @@ browser.implicitly_wait(0)
 
 # FOLLOW PEOPLE -----------------------------------------------------------
 if follow_people:
-    browser.find_element(By.XPATH, '//a[@href="' + '/category/Women' + '"]').click()
+    WebDriverWait(browser, 20).until(EC.presence_of_element_located((By.XPATH, '//a[@href="/category/Women"]'))).click()
 
-    time.sleep(40)
+    time.sleep(5)
+    WebDriverWait(browser, 20).until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'tile__creator')))[0].click()
+    WebDriverWait(browser, 20).until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'closet__header__allow__display_handle_container')))[1].click()
+    time.sleep(2)
 
-    for i in range(len(browser.find_elements(By.CSS_SELECTOR, '.btn--primary'))):
+    # Since this script is intended to run several times a day, it doesn't go crazy with the amount of follows. (Although you can keep scrolling and following as much as you want)
+    for i in range(len(browser.find_elements(By.CSS_SELECTOR, '.btn--primary'))-5):
         browser.find_elements(By.CSS_SELECTOR, '.btn--primary')[1].click()
         time.sleep(random.uniform(0.4, 0.8))  # 0.4, 0.9time.sleep(1)
         if len(browser.find_elements(By.CSS_SELECTOR, '.modal__close-btn')) > 0:
