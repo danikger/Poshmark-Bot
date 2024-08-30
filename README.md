@@ -6,3 +6,10 @@ A Python-based bot designed to automate the sharing of closet items on Poshmark.
 - Create a [2Captcha](https://2captcha.com/) account and add a balance.
 - Fill out your details in `.env`. A template is provided at `.env.example`.
 - Install dependencies: `pip install selenium twocaptcha dotenv`.
+
+## Usage
+Run the bot
+```
+python main.py
+```
+The bot will start and automatically log in to your Poshmark account, solve any captchas using 2Captcha, and begin sharing your closet items.
